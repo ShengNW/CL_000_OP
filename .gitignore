@@ -1,0 +1,38 @@
+# Rust
+/target/
+**/target/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.so
+.venv/
+.env
+
+# Runtime output
+/runtime/
+/logs/
+/screens/
+/screenshots/
+
+# Data, caches, models
+/data/
+/cache/
+/models/
+/release/
+
+# Large model artifacts
+*.pt
+*.bin
+*.safetensors
+*.onnx
+
+# Generated docs artifacts (runtime reports)
+/docs/*.json
+/docs/*.log
+
+# OS
+.DS_Store
+Thumbs.db

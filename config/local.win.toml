@@ -1,0 +1,26 @@
+[aw]
+base_url = "http://127.0.0.1:5600"
+
+[omni]
+base_url = "http://127.0.0.1:8000"
+
+[paths]
+root = "F:\\aw-omni"
+runtime_logs = "F:\\aw-omni\\runtime\\logs"
+runtime_pid = "F:\\aw-omni\\runtime\\pid"
+data_aw_raw = "F:\\aw-omni\\data\\aw_raw"
+data_episodes = "F:\\aw-omni\\data\\episodes"
+data_nowframes = "F:\\aw-omni\\data\\nowframes"
+cache_screens = "F:\\aw-omni\\cache\\screens"
+cache_thumbs = "F:\\aw-omni\\cache\\thumbs"
+cache_tmp = "F:\\aw-omni\\cache\\tmp"
+models = "F:\\aw-omni\\models"
+release = "F:\\aw-omni\\release"
+src = "F:\\aw-omni\\src"
+
+[sidecar]
+python = "D:\\exe\\environment\\anaconda\\envs\\Aliyun39\\python.exe"
+script = "F:\\aw-omni\\src\\sidecar\\omni_sidecar_entry.py"
+sidecar_mode = "mock"
+real_repo = "F:\\aw-omni\\src\\third_party\\OmniParser"
+weights_root = "F:\\aw-omni\\models\\omniparser"

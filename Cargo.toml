@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/aw_client",
+  "crates/omni_client",
+  "crates/trigger_engine",
+  "crates/nowframe_core",
+  "apps/aw_omni_daemon",
+  "apps/aw_omni_mcp",
+]
+
+[workspace.dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = { version = "2", features = ["json"] }
+clap = { version = "4", features = ["derive"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
+toml = "0.8"
