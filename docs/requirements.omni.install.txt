@@ -1,0 +1,52 @@
+# Generated install plan for OmniParser (Aliyun39 guarded install)
+# Source: /tmp/omniparser_repo/requirements.txt
+
+# Excluded (protected or non-essential for sidecar core)
+# - torch (protected)
+# - torchvision (protected)
+# - torchaudio (protected if present)
+# - opencv-python (protected)
+# - opencv-python-headless (protected)
+# - openai (cloud/LLM)
+# - azure-identity (cloud)
+# - gradio (UI)
+# - streamlit (UI)
+# - pre-commit (dev)
+# - ruff (dev)
+# - pytest (dev)
+# - pytest-asyncio (dev)
+# - anthropic[bedrock,vertex] (cloud)
+# - boto3 (cloud)
+# - google-auth (cloud)
+# - dashscope (cloud)
+# - groq (cloud)
+# - pyautogui (UI)
+# - uiautomation (UI)
+
+# Install batches (guarded)
+
+# batch1: base server/runtime
+fastapi
+uvicorn
+pydantic
+requests
+
+# batch2: inference helpers
+transformers
+accelerate
+timm
+einops==0.8.0
+supervision==0.18.0
+ultralytics==8.3.70
+
+dill
+
+# batch3: OCR chain
+# (may trigger heavy deps; keep last)
+easyocr
+paddlepaddle
+paddleocr
+
+# optional utilities from requirements
+jsonschema==4.22.0
+screeninfo

@@ -13,3 +13,9 @@ toml = { workspace = true }
 aw_client = { path = "../../crates/aw_client" }
 omni_client = { path = "../../crates/omni_client" }
 nowframe_core = { path = "../../crates/nowframe_core" }
+base64 = "0.22"
+image = { version = "0.25", default-features = false, features = ["png"] }
+imageproc = { version = "0.25.0", default-features = false }
+
+[target.'cfg(windows)'.dependencies]
+xcap = { version = "0.8.2", default-features = false, features = ["image"] }

@@ -1,122 +1,53 @@
-# CL_000_OP — AW + OmniParser MCP
+# AW + OmniParser MCP (Rust-first skeleton)
 
-A Rust-first control plane that combines **ActivityWatch (AW)** context with **OmniParser** UI parsing. The system is designed to be safe-by-default, read-only against AW, and friendly to constrained Windows environments.
+## 1. Project定位
+Rust 控制面 + Python mock sidecar 的最小可运行骨架。Rust 负责 AW 访问、触发与 nowframe 生成；Python sidecar 仅提供标准库 HTTP mock，后续可替换为真实 OmniParser。
 
-```mermaid
-flowchart LR
-  AW[ActivityWatch Server] -->|/api/0/info, /api/0/buckets| Daemon
-  Sidecar[OmniParser Sidecar] -->|/probe, /parse| Daemon
-  Daemon --> NowFrame[NowFrame JSON]
-  MCP[MCP Stdio Stub] -->|aw.get_state / nowframe.build / system.health| Clients
-```
+## 2. 目录结构（F 盘布局）
+固定根目录：`F:\aw-omni`
 
-## Project Positioning
+- `F:\aw-omni\runtime\logs`
+- `F:\aw-omni\runtime\pid`
+- `F:\aw-omni\data\aw_raw`
+- `F:\aw-omni\data\episodes`
+- `F:\aw-omni\data\nowframes`
+- `F:\aw-omni\cache\screens`
+- `F:\aw-omni\cache\thumbs`
+- `F:\aw-omni\cache\tmp`
+- `F:\aw-omni\models`
+- `F:\aw-omni\release`
+- `F:\aw-omni\src` (本仓库源码)
 
-- **Rust control plane**: health, triggers, NowFrame assembly, MCP stub.
-- **Python sidecar**: mock (stdlib) or real OmniParser (optional).
-- **No automatic CUDA/Torch changes**: all sensitive packages are protected.
+## 3. 启动步骤（Windows 优先）
+1. 进入 `F:\aw-omni\src`
+2. 启动 Python sidecar entry（默认 mock，不安装任何包）：
+   - `D:\exe\environment\anaconda\envs\Aliyun39\python.exe F:\aw-omni\src\sidecar\omni_sidecar_entry.py --mode mock --host 127.0.0.1 --port 8000`
+3. 启动 Rust 控制面：
+   - `scripts\run_daemon_win.cmd health`
+   - `scripts\run_mcp_win.cmd`
 
-## Quick Start (Windows)
+## 4. API / MCP 工具示例
+- AW 探活：
+  - `http://127.0.0.1:5600/api/0/info`
+  - `http://127.0.0.1:5600/api/0/buckets`
+- Sidecar mock：
+  - `GET http://127.0.0.1:8000/probe`
+  - `POST http://127.0.0.1:8000/parse`
+- MCP stub (stdio JSON-RPC)：
+  - `{"id":1,"method":"aw.get_state","params":{}}`
+  - `{"id":2,"method":"nowframe.build","params":{"reason":"manual"}}`
+  - `{"id":3,"method":"system.health","params":{}}`
+  - `{"id":4,"method":"screen.capture","params":{"mode":"full","format":"png","with_cursor":false}}`
+  - `{"id":5,"method":"screen.parse","params":{"frame_id":"frame_xxx"}}`
+  - `{"id":6,"method":"screen.bundle","params":{"mode":"full","format":"png","with_cursor":false}}`
+  - `{"id":7,"method":"resource.read","params":{"uri":"screen://latest/annotated"}}`
 
-### 1) Mock Sidecar (safe, no ML deps)
+## 4.1 安全与网络
+- MCP 默认走 stdio，本地仅限 `127.0.0.1` 侧的 AW/sidecar 访问。
+- 可选鉴权：设置 `MCP_AUTH_TOKEN`，并在 `params.auth_token` 里携带同值。
+- 不要直接公网暴露；如需远程访问，建议走 SSH 双跳隧道（示例，转发 sidecar 8000）：`ssh -J user@bastion user@vps -L 127.0.0.1:8000:127.0.0.1:8000`
 
-```powershell
-# Start mock sidecar
-F:\aw-omni\src\scripts\run_sidecar_entry_win.ps1 -Mode mock
-
-# Start daemon
-F:\aw-omni\src\scripts\run_daemon_win.ps1
-
-# Start MCP (stdio JSON-RPC stub)
-F:\aw-omni\src\scripts\run_mcp_win.ps1
-```
-
-### 2) Real Sidecar (OmniParser required)
-
-- Add OmniParser as a submodule or external clone under `third_party/OmniParser`.
-- Apply the local patch: `docs/patches/omniparser-local.patch`.
-- Place weights under `F:\aw-omni\models\omniparser`.
-
-```powershell
-# Start real sidecar (untitled env example)
-D:\exe\environment\anaconda\envs\untitled\python.exe F:\aw-omni\src\sidecar\omni_sidecar_entry.py `
-  --mode real_local_untitled `
-  --host 127.0.0.1 --port 8000 `
-  --real-repo F:\aw-omni\src\third_party\OmniParser `
-  --weights-root F:\aw-omni\models\omniparser
-```
-
-## Configuration
-
-- `config/local.win.toml`
-- `config/local.wsl.toml`
-
-All paths are expected to be on **F:** to keep large artifacts out of system disks. The system will **not** modify Torch/CUDA/OpenCV stacks automatically.
-
-## MCP Local Architecture (OP + Lively)
-
-- **OP** (this repo): develop + build `aw_omni_mcp.exe`, register MCP locally.
-- **Lively**: consume the MCP tool from Codex and call `screen.bundle`.
-
-The MCP server supports both **Content-Length framing** and **line-json** inputs for compatibility. Output framing follows the input mode.
-
-## Build aw_omni_mcp (Windows/WSL Hybrid)
-
-```powershell
-# Build on Windows toolchain from WSL
-powershell.exe -NoProfile -Command "Set-Item Env:CARGO_TARGET_DIR 'F:\aw-omni\cache\aw_omni_target'; Set-Location 'F:\aw-omni\src'; & 'C:\Users\surface\.rustup\toolchains\stable-x86_64-pc-windows-msvc\bin\cargo.exe' build -p aw_omni_mcp"
-```
-
-## MCP Registration (Current Working Command)
-
-```bash
-codex mcp remove aw_omni_local || true
-codex mcp add aw_omni_local -- /mnt/f/aw-omni/cache/aw_omni_target/debug/aw_omni_mcp.exe --config 'F:\aw-omni\src\config\local.win.toml'
-```
-
-## Lively Consumption Template
-
-**Always set `format="png"`**.
-
-```text
-aw_omni_local.screen.bundle({"mode":"full","format":"png","with_cursor":false,"include_b64":true})
-```
-
-## screen.bundle Return Contract (Key Fields)
-
-- `raw_path`, `annotated_path`, `mask_path`
-- `raw_b64`, `annotated_b64`, `mask_b64`
-- `raw_b64_len`, `annotated_b64_len`, `mask_b64_len`
-- `elements`, `aw_context`, `frame_id`, `ts`, `latency_ms`, `has_text`, `has_icon`
-
-## Protocol Documentation
-
-- `docs/protocols/AW_PROTOCOL.md`
-- `docs/protocols/OMNIPARSER_SIDECAR_PROTOCOL.md`
-- `docs/protocols/MCP_TOOL_CONTRACT.md`
-- `DATA_GOVERNANCE.md`
-
-## Troubleshooting
-
-- **NumPy / OpenCV conflicts**: use guarded install scripts in `scripts/`.
-- **Weights missing**: check `F:\aw-omni\models\omniparser`.
-- **Cache paths**: ensure `F:\aw-omni\cache` is writable.
-- **Sidecar not ready**: call `/probe` and inspect `reason` / `missing_*` fields.
-- **initialize response closed**: client/server framing mismatch; server accepts both line-json and Content-Length.
-- **format_not_supported**: `screen.bundle` only supports `format="png"`.
-- **CONTRACT_INCOMPLETE / truncated**: response too large; consumers should not rely on local paths to re-derive images.
-
-## Next Step (OSS Object Storage)
-
-Persist images to object storage and return **URLs + metadata** in MCP responses to avoid large base64 payloads.
-
-## Safety & Stability
-
-- This repo does **not** modify AW configuration.
-- Torch/CUDA/OpenCV are treated as **protected** packages.
-- Heavy artifacts (models/cache/runtime/logs) are excluded from version control.
-
-## License
-
-- This repository is licensed under MPL-2.0. See `LICENSE`.
-- Third-party license references: `THIRD_PARTY_NOTICES.md`.
+## 5. 已知限制与下一步
+- 仅为最小骨架，MCP 仅实现 JSON-RPC 风格 stub。
+- Sidecar 为 mock，不涉及真实模型、GPU 或 OmniParser。
+- 下一步：在不破坏现有 conda/torch 环境的前提下，引入真实 OmniParser sidecar，并评估依赖风险后再接入。

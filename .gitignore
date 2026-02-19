@@ -10,6 +10,8 @@ __pycache__/
 *.so
 .venv/
 .env
+*.log
+*.tmp
 
 # Runtime output
 /runtime/
