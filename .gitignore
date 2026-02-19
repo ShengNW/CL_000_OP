@@ -16,6 +16,9 @@ __pycache__/
 /logs/
 /screens/
 /screenshots/
+/mcp_probe/logs/
+/mcp_probe/reports/
+*.png
 
 # Data, caches, models
 /data/
